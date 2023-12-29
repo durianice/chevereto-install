@@ -15,7 +15,7 @@ welcome() {
 work_dir=/opt/chevereto
 install_tools() {
     echo "开始安装必要工具..."
-    sudo apt-get install -y make unzip curl git lsof
+    sudo apt-get install -y make unzip curl git lsof jq
     if [ $? -ne 0 ]; then
         echo "必要工具安装失败，请检查网络或手动安装！"
         exit 0
@@ -38,20 +38,8 @@ setup_cron_job() {
     echo "后台作业设置完成！"
 }
 
-final_port=443
 setup_https_proxy() {
     echo "正在设置 NGINX 的 HTTPS 代理..."
-    read -p "请输入映射端口（默认宿主机 80）: " http_port
-    if [ ! -z "$http_port" ]; then
-        check_port $http_port
-        sed -i "s/--publish 80:80/--publish $http_port:80/g" Makefile
-    fi
-    read -p "请输入映射端口（默认宿主机 443）: " https_port
-    if [ ! -z "$https_port" ]; then
-        check_port $https_port
-        sed -i "s/--publish 443:443/--publish $https_port:443/g" Makefile
-        final_port=$https_port
-    fi
     read -p "请输入您的邮箱: " email_https
     make proxy EMAIL_HTTPS=$email_https
     echo "HTTPS 代理设置完成！"
@@ -91,22 +79,27 @@ spawn_chevereto_site() {
         make spawn NAMESPACE=$namespace EDITION=free
     fi
     echo "Chevereto 网站生成完成！"
-    echo "请打开浏览器访问：https://$hostname:$final_port"
+    echo "请打开浏览器访问：https://$hostname"
+    echo "如果出现 502 Bad Gateway 错误，请等待一分钟后再次访问！"
 }
 
 remove_namespace() {
     namespace_select
     read -rp "确认是否删除，数据不可恢复！如需删除请按Y，按其他键则退出 [Y/N]: " yn
     if [[ $yn =~ "Y"|"y" ]]; then
-        backup_data $namespace_seleted
-        echo "正在删除 $namespace_seleted 网站及数据..."
-        cd ${work_dir}/docker
-        make destroy NAMESPACE=$namespace_seleted
-        docker network rm ${namespace_seleted}_chevereto_chevereto
-        echo "$namespace_seleted 删除完成！"
+        remove_single_namespace $namespace_seleted
     else
         exit 1
     fi
+}
+
+remove_single_namespace () {
+    local namespace=$1
+    backup_data $namespace
+    echo "正在删除 $namespace 网站及数据..."
+    cd ${work_dir}/docker
+    make destroy NAMESPACE=$namespace
+    echo "$namespace 删除完成！"
 }
 
 check_port(){
@@ -193,7 +186,6 @@ nginx_proxy_manage() {
                 ;;
             "卸载")
                 make proxy--remove
-                docker network rm nginx-proxy
                 break
                 ;;
             "退出")
@@ -211,11 +203,13 @@ backup_data() {
     echo "正在备份数据..."
     namespace=$1
     path=/var/lib/docker/volumes/${namespace}_chevereto_storage
-    # 如果没有安装 zip 则进行安装
+    if [ ! -d "$path" ]; then
+        echo "数据备份失败，路径不存在！"
+        exit 0
+    fi
     if [ ! -x "$(command -v zip)" ]; then
         sudo apt-get install -y zip
     fi
-    # 打包数据
     zip -r ${namespace}_chevereto_storage.zip $path
     mkdir -p /root/chevereto_back
     cp ${namespace}_chevereto_storage.zip /root/chevereto_back
@@ -229,11 +223,13 @@ backup_data() {
 main() {
     welcome
     PS3='请选择您要执行的操作: '
-    options=("安装" "添加网站" "Nginx Proxy" "查看日志" "删除网站" "退出")
+    options=("安装" "添加网站" "Nginx Proxy" "查看日志" "删除网站" "卸载Chevereto" "退出")
     select opt in "${options[@]}"
     do
         case $opt in
             "安装")
+                check_port 80
+                check_port 443
                 install_tools
                 clone_docker_project
                 setup_cron_job
@@ -261,6 +257,24 @@ main() {
                 ;;
             "删除网站")
                 remove_namespace
+                break
+                ;;
+            "卸载Chevereto")
+                if [ ! -d "${work_dir}" ]; then
+                    echo "Chevereto 未安装！"
+                    exit 0
+                fi
+                echo "正在卸载 Chevereto..."
+                for file in `ls ${work_dir}/docker/namespace/`; do
+                    if [ "$file" = "dev" ] || [ "$file" = "chevereto" ]; then
+                        continue
+                    fi
+                    remove_single_namespace $file
+                done
+                cd ${work_dir}/docker
+                make proxy--remove
+                rm -rf ${work_dir}
+                echo "Chevereto 卸载完成！"
                 break
                 ;;
             "退出")
