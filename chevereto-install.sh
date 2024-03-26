@@ -223,7 +223,7 @@ backup_data() {
 main() {
     welcome
     PS3='请选择您要执行的操作: '
-    options=("安装" "添加网站" "Nginx Proxy" "查看日志" "删除网站" "卸载Chevereto" "退出")
+    options=("安装" "添加网站" "从官网更新所有网站" "Nginx Proxy" "查看日志" "删除网站" "卸载Chevereto" "退出")
     select opt in "${options[@]}"
     do
         case $opt in
