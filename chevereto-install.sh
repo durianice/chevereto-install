@@ -200,8 +200,8 @@ nginx_proxy_manage() {
 }
 
 backup_data() {
-    echo "正在备份数据..."
     namespace=$1
+    echo "正在备份【$namespace】数据..."
     path=/var/lib/docker/volumes/${namespace}_chevereto_storage
     if [ ! -d "$path" ]; then
         echo "数据备份失败，路径不存在！"
@@ -257,11 +257,11 @@ main() {
                     if [ "$file" = "dev" ] || [ "$file" = "chevereto" ]; then
                         continue
                     fi
-                    echo "正在备份【$file】数据..."
                     backup_data $file
                 done
                 echo "正在更新所有网站 ..."
                 cd ${work_dir}/docker
+                git pull
                 make update
                 break
                 ;;
