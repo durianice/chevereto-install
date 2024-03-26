@@ -257,7 +257,7 @@ main() {
                     if [ "$file" = "dev" ] || [ "$file" = "chevereto" ]; then
                         continue
                     fi
-                    echo "正在备份【${$file}】数据..."
+                    echo "正在备份【$file】数据..."
                     backup_data $file
                 done
                 echo "正在更新所有网站 ..."
