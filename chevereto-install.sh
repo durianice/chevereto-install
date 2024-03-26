@@ -247,6 +247,24 @@ main() {
                 spawn_chevereto_site
                 break
                 ;;
+            "从官网更新所有网站")
+                if [ ! -d "${work_dir}" ]; then
+                    echo "Chevereto 未安装！"
+                    exit 0
+                fi
+                echo "正在备份 Chevereto..."
+                for file in `ls ${work_dir}/docker/namespace/`; do
+                    if [ "$file" = "dev" ] || [ "$file" = "chevereto" ]; then
+                        continue
+                    fi
+                    echo "正在备份【${$file}】数据..."
+                    backup_data $file
+                done
+                echo "正在更新所有网站 ..."
+                cd ${work_dir}/docker
+                make update
+                break
+                ;;
             "Nginx Proxy")
                 nginx_proxy_manage
                 break
