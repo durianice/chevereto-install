@@ -66,15 +66,29 @@ set_namespace() {
 }
 
 build_chevereto_image() {
+    local version=${1:-4.0}
+    source ./.env.local
+    local key=$CHEVERETO_LICENSE
+    if [ -z "$key" ]; then
+        read -p "请输入 Chevereto 许可证: " key 
+        if [ -z "$key" ]; then
+            echo "许可证为空，脚本退出。"
+            exit 1
+        else
+            echo "CHEVERETO_LICENSE=$key" > .env.local 
+            export CHEVERETO_LICENSE=$key 
+        fi
+    fi
     echo "请稍等，正在构建 Chevereto 镜像..."
-    make image LICENSE=$chevereto_license
+    make image CHEVERETO_LICENSE_KEY=$key VERSION=$version
     echo "Chevereto 镜像构建完成！"
 }
+
 
 spawn_chevereto_site() {
     echo "正在生成 Chevereto 网站..."
     if [ ! -z "$chevereto_license" ]; then
-        make spawn NAMESPACE=$namespace
+        make spawn NAMESPACE=$namespace EDITION=pro
     else
         make spawn NAMESPACE=$namespace EDITION=free
     fi
@@ -236,6 +250,7 @@ main() {
                 setup_https_proxy
                 read -p "如果您有 Chevereto 许可证，请输入（否则留空）: " chevereto_license
                 if [ ! -z "$chevereto_license" ]; then
+                    echo "CHEVERETO_LICENSE=$chevereto_license" > .env.local
                     build_chevereto_image
                 fi
                 set_namespace
@@ -262,6 +277,7 @@ main() {
                 echo "正在更新所有网站 ..."
                 cd ${work_dir}/docker
                 git pull
+                build_chevereto_image "4.0.12"
                 make update
                 break
                 ;;
