@@ -1,5 +1,5 @@
 ## 开始
-### 1 替换 [docker-compose.yml](https://github.com/durianice/chevereto-install/blob/pure-docker/docker-compose.yml) 中 `{{ }}` 的值
+### 1 替换 [docker-compose.yml](https://github.com/durianice/chevereto-install/blob/pure-docker/docker-compose.yml) 中的 `{{xxx}}` 为实际值
 ### 2 `docker compose up -d` (或 `20` 以前的版本 `docker-compose up -d`)
 ### 3 域名解析
 ### 4 Nginx (或 Caddy) 反代至 `http://127.0.0.1:8880`，具体参考[这里](https://google.com)
