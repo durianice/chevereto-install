@@ -11,8 +11,8 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect"]
-      interval: 10秒
-      timeout: 5秒
+      interval: 10s
+      timeout: 5s
       retries: 3
     environment:
       MYSQL_ROOT_PASSWORD: {{ROOT数据库密码}}
