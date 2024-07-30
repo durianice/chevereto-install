@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  database:
+    image: mariadb:11.2.4-jammy
+    container_name: chevereto_database
+    networks:
+      - chevereto
+    volumes:
+      - database:/var/lib/chevereto/mysql
+    restart: always
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    environment:
+      MYSQL_ROOT_PASSWORD: {{ROOT数据库密码}}
+      MYSQL_DATABASE: chevereto
+      MYSQL_USER: chevereto
+      MYSQL_PASSWORD: {{用户数据库密码}}
+
+  php:
+    image: ghcr.io/chevereto/chevereto:latest
+    container_name: chevereto_app
+    networks:
+      - chevereto
+    volumes:
+      - storage:/var/www/html/chevereto/images/
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8880:80"
+    environment:
+      CHEVERETO_DB_HOST: database
+      CHEVERETO_DB_USER: chevereto
+      CHEVERETO_DB_PASS: {{用户数据库密码}}
+      CHEVERETO_DB_PORT: 3306
+      CHEVERETO_DB_NAME: chevereto
+      CHEVERETO_HOSTNAME: {{域名}}
+      CHEVERETO_HOSTNAME_PATH: /
+      CHEVERETO_HTTPS: 0
+      CHEVERETO_ASSET_STORAGE_TYPE: local
+      CHEVERETO_ASSET_STORAGE_URL: http://{{域名}}/images/_assets/
+      CHEVERETO_ASSET_STORAGE_BUCKET: /var/www/html/chevereto/images/_assets/
+
+volumes:
+  database:
+  storage:
+
+networks:
+  chevereto:
