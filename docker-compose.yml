@@ -11,8 +11,8 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect"]
-      interval: 10s
-      timeout: 5s
+      interval: 10秒
+      timeout: 5秒
       retries: 3
     environment:
       MYSQL_ROOT_PASSWORD: {{ROOT数据库密码}}
@@ -39,11 +39,11 @@ services:
       CHEVERETO_DB_PASS: {{用户数据库密码}}
       CHEVERETO_DB_PORT: 3306
       CHEVERETO_DB_NAME: chevereto
-      CHEVERETO_HOSTNAME: {{域名}}
+      CHEVERETO_HOSTNAME: {{domain.com}}
       CHEVERETO_HOSTNAME_PATH: /
       CHEVERETO_HTTPS: 0
       CHEVERETO_ASSET_STORAGE_TYPE: local
-      CHEVERETO_ASSET_STORAGE_URL: http://{{域名}}/images/_assets/
+      CHEVERETO_ASSET_STORAGE_URL: http://{{domain.com}}/images/_assets/
       CHEVERETO_ASSET_STORAGE_BUCKET: /var/www/html/chevereto/images/_assets/
 
 volumes:
